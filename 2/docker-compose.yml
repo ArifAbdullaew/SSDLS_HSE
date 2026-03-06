@@ -1,0 +1,30 @@
+services:
+  db:
+    build: ./db
+    container_name: postgresql_task2
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata_task2:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "appuser"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  pinger:
+    build: ./app
+    container_name: app_pinger
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/var/log
+volumes:
+  pgdata_task2:
