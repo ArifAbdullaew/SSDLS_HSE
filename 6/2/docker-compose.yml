@@ -1,0 +1,78 @@
+services:
+  db:
+    build: ./db
+    container_name: postgresql_task6
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata_task6:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "appuser"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Шаг 2-3: HashiCorp Vault в режиме сервера для разработки (dev mode).
+  # Volume vault-file монтируется на /vault/file, доступен вне контейнера.
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault_task6
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: root-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      VAULT_ADDR: http://127.0.0.1:8200
+    ports:
+      - "8200:8200"
+    volumes:
+      - vault-file:/vault/file
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  # Одноразовый контейнер: настраивает Vault после его запуска.
+  # Шаги 4-8: включает AppRole, создаёт секрет, политику и AppRole для pinger.
+  vault-setup:
+    image: hashicorp/vault:latest
+    container_name: vault_setup_task6
+    depends_on:
+      vault:
+        condition: service_healthy
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: root-token
+    volumes:
+      - ./vault-init:/vault-init:ro
+      - vault-secrets:/vault-secrets
+    command: sh /vault-init/setup.sh
+    restart: "no"
+
+  pinger:
+    build: ./app
+    container_name: app_pinger_task6
+    depends_on:
+      db:
+        condition: service_healthy
+      vault-setup:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_SECRET_PATH: pinger/db
+    volumes:
+      - ./logs:/var/log
+      - vault-secrets:/vault-secrets:ro
+
+volumes:
+  pgdata_task6:
+  vault-file:        # Шаг 3: /vault/file хранится здесь, доступен вне образа
+  vault-secrets:     # Общий volume для role-id и secret-id между setup и pinger
