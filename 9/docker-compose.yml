@@ -1,0 +1,62 @@
+version: "3.9"
+
+networks:
+  internal:
+    name: task9_net
+
+services:
+
+  db:
+    image: postgres:16
+    env_file: .env
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-cve_db}
+      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - ../7/sql/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ../7/sql/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+      - ../7/sql/03_permissions.sql:/docker-entrypoint-initdb.d/03_permissions.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB:-cve_db} -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - internal
+
+  web:
+    build:
+      context: ../7
+      dockerfile: Dockerfile
+    image: cve-web:task9
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    networks:
+      - internal
+
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    command: >
+      zap.sh -daemon
+        -host 0.0.0.0
+        -port 8080
+        -config api.addrs.addr.name=.*
+        -config api.addrs.addr.regex=true
+        -config api.disablekey=true
+        -config connection.timeoutInSecs=120
+    ports:
+      - "8090:8080"
+    volumes:
+      - ./reports:/zap/wrk:rw
+    networks:
+      - internal
+    user: zap
+
+volumes:
+  pgdata:

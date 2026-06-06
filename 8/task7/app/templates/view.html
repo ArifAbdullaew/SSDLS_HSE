@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Просмотр{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h1>&#128269; Просмотр таблиц</h1>
+
+  <form method="POST" action="{{ url_for('view') }}">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="table">Таблица</label>
+        <select id="table" name="table">
+          {% for t in tables %}
+          <option value="{{ t }}" {% if t == selected_table %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="filter_col">Фильтр: колонка</label>
+        <input type="text" id="filter_col" name="filter_col"
+               placeholder="например, cve_id"
+               value="{{ request.form.get('filter_col', '') }}">
+      </div>
+      <div class="form-group">
+        <label for="filter_val">Фильтр: значение</label>
+        <input type="text" id="filter_val" name="filter_val"
+               placeholder="например, CVE-2024-12345"
+               value="{{ request.form.get('filter_val', '') }}">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Показать</button>
+    <a href="{{ url_for('view') }}" class="btn btn-secondary" style="margin-left:.5rem;">Сброс</a>
+  </form>
+</div>
+
+{% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+{% if rows is not none %}
+  <div class="card">
+    <h2>
+      Результат — {{ selected_table }}
+      <span class="badge badge-green">{{ rows|length }} строк</span>
+    </h2>
+
+    {% if rows %}
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            {% for col in columns %}
+            <th>{{ col }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            {% for col in columns %}
+            <td title="{{ row[col] }}">{{ row[col] }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="color:#888;font-style:italic;">Записей не найдено.</p>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

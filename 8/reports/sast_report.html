@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>SAST Отчёт — Задания 3 и 7</title>
+<style>
+  body { font-family: "Segoe UI", Arial, sans-serif; margin: 2rem; color: #1a1f2e; background: #f5f7fa; }
+  h1   { font-size: 1.8rem; margin-bottom: 0.4rem; }
+  h2   { font-size: 1.3rem; color: #2d3650; margin: 2rem 0 0.5rem; border-bottom: 2px solid #4a90e2; padding-bottom: 0.3rem; }
+  h3   { font-size: 1.05rem; color: #4a90e2; margin: 1.4rem 0 0.5rem; }
+  p, li { line-height: 1.6; }
+  .meta { color: #666; font-size: 0.88rem; margin-bottom: 2rem; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.88rem; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,.08); }
+  th { background: #1a1f2e; color: #c4cde0; padding: 0.65rem 0.9rem; text-align: left; white-space: nowrap; }
+  td { padding: 0.55rem 0.9rem; border-bottom: 1px solid #eef0f5; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #f8f9fb; }
+  .no-findings td { color: #888; font-style: italic; }
+  .p-critical { background: #fde8e8 !important; color: #7b1f1f; font-weight: 700; }
+  .p-high     { background: #fff0e0 !important; color: #7a3800; font-weight: 700; }
+  .p-medium   { background: #fffbe6 !important; color: #665000; }
+  .p-low      { background: #f0faf2 !important; color: #1a4729; }
+  .p-fp       { background: #f0f2f5 !important; color: #888; }
+  .badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:20px; font-size:0.78rem; font-weight:700; }
+  .b-med  { background:#fff0e0; color:#7a3800; }
+  .b-warn { background:#fffbe6; color:#665000; }
+  .b-ok   { background:#f0faf2; color:#1a4729; }
+  .tool-section { background:#fff; border-radius:10px; padding:1.5rem; margin-bottom:1.5rem; box-shadow:0 1px 6px rgba(0,0,0,.08); }
+  code { background:#f0f2f5; padding:0.1rem 0.35rem; border-radius:3px; font-size:0.87em; }
+  .conclusion { background:#e8f0fe; border-left:4px solid #4a90e2; padding:1rem 1.2rem; border-radius:0 8px 8px 0; margin-top:2rem; }
+</style>
+</head>
+<body>
+
+<h1>Отчёт по статическому анализу кода (SAST)</h1>
+<p class="meta">
+  Дата: 06.06.2026 &nbsp;|&nbsp;
+  Инструменты: <strong>Semgrep 1.165.0</strong> (универсальный SAST) и <strong>Bandit 1.9.4</strong> (Python-специализированный SAST) &nbsp;|&nbsp;
+  Язык: Python 3.12
+</p>
+
+<hr>
+
+<!-- ==================== ЗАДАНИЕ 3 ==================== -->
+<h2>1. Приложение — Задание 3 (CLI-клиент CVE Database)</h2>
+<p>Исходный код: <code>task3/app/app.py</code>, <code>task3/app/db.py</code> — консольное (CLI) приложение для работы с PostgreSQL базой данных CVE.</p>
+
+<div class="tool-section">
+<h3>Таблица 1 — Результаты Semgrep (Задание 3)</h3>
+<p>Конфигурации: <code>p/python</code>, <code>p/flask</code>, <code>p/security-audit</code>, <code>p/secrets</code>, <code>p/owasp-top-ten</code>. Проверено 2 файла, 207 правил.</p>
+<table>
+  <thead>
+    <tr><th>Файл</th><th>Строка</th><th>Тип ошибки</th><th>Подробности</th></tr>
+  </thead>
+  <tbody class="no-findings">
+    <tr><td colspan="4">Нарушений не обнаружено. 0 срабатываний.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tool-section">
+<h3>Таблица 2 — Результаты Bandit (Задание 3)</h3>
+<p>Режим: рекурсивное сканирование, все уровни серьёзности и уверенности. Проверено 338 строк кода в 2 файлах.</p>
+<table>
+  <thead>
+    <tr><th>Файл</th><th>Строка</th><th>Тип ошибки</th><th>Подробности</th></tr>
+  </thead>
+  <tbody class="no-findings">
+    <tr><td colspan="4">Нарушений не обнаружено. 0 срабатываний.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tool-section">
+<h3>Таблица 3 — Сводная таблица (Задание 3)</h3>
+<table>
+  <thead>
+    <tr><th>Файл</th><th>Строка</th><th>Тип ошибки</th><th>Подробности</th><th>Инструмент</th><th>Приоритет</th></tr>
+  </thead>
+  <tbody class="no-findings">
+    <tr><td colspan="6">Оба инструмента не выявили нарушений. Сводная таблица пуста.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ==================== ЗАДАНИЕ 7 ==================== -->
+<h2>2. Приложение — Задание 7 (Flask Web-приложение CVE Database)</h2>
+<p>Исходный код: <code>task7/app/app.py</code>, <code>task7/app/db.py</code>, шаблоны <code>task7/app/templates/*.html</code> — веб-интерфейс на Flask с авторизацией и CRUD-операциями над базой данных CVE.</p>
+
+<div class="tool-section">
+<h3>Таблица 4 — Результаты Semgrep (Задание 7)</h3>
+<p>Конфигурации: <code>p/python</code>, <code>p/flask</code>, <code>p/security-audit</code>, <code>p/secrets</code>, <code>p/owasp-top-ten</code>. Проверено 8 файлов (2 Python + 6 HTML), 207+ правил.</p>
+<table>
+  <thead>
+    <tr><th>Файл</th><th>Строка</th><th>Тип ошибки</th><th>Подробности</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>task7/app/app.py</code></td>
+      <td>242</td>
+      <td>CWE-668: Exposure of Resource to Wrong Sphere<br><span class="badge b-warn">WARNING</span></td>
+      <td>
+        Правило: <code>python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host</code><br>
+        Запуск Flask-приложения с параметром <code>host="0.0.0.0"</code> открывает сервис на всех сетевых интерфейсах, что делает его доступным публично.<br>
+        OWASP: A01:2021 — Broken Access Control.<br>
+        Исходный код: <code>app.run(host="0.0.0.0", port=5000, debug=False)</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tool-section">
+<h3>Таблица 5 — Результаты Bandit (Задание 7)</h3>
+<p>Режим: рекурсивное сканирование, все уровни серьёзности и уверенности. Проверено 320 строк кода в 2 файлах.</p>
+<table>
+  <thead>
+    <tr><th>Файл</th><th>Строка</th><th>Тип ошибки</th><th>Подробности</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>task7/app/app.py</code></td>
+      <td>242</td>
+      <td>B104: hardcoded_bind_all_interfaces<br>
+        <span class="badge b-med">Severity: Medium</span>
+        <span class="badge b-med">Confidence: Medium</span>
+      </td>
+      <td>
+        CWE-605: Non-synchronized Access to Shared Data.<br>
+        Возможная привязка ко всем интерфейсам — параметр <code>host="0.0.0.0"</code> в <code>app.run()</code>.<br>
+        При запуске за обратным прокси (nginx, Caddy) следует привязываться только к <code>127.0.0.1</code>.<br>
+        Подробности: <a href="https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html" target="_blank">bandit B104</a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tool-section">
+<h3>Таблица 6 — Сводная таблица (Задание 7)</h3>
+<p>Строки отсортированы: от критических к несущественным; ложные срабатывания — в конце.</p>
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Файл</th>
+      <th>Строка</th>
+      <th>Тип ошибки / Правило</th>
+      <th>Подробности</th>
+      <th>Инструменты</th>
+      <th>Приоритет</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="p-medium">
+      <td>1</td>
+      <td><code>task7/app/app.py</code></td>
+      <td>242</td>
+      <td>
+        Привязка ко всем сетевым интерфейсам<br>
+        <small>B104 (Bandit) / avoid_app_run_with_bad_host (Semgrep)</small>
+      </td>
+      <td>
+        <code>app.run(host="0.0.0.0", ...)</code> открывает сервис на всех интерфейсах. При развёртывании за прокси-сервером необходимо использовать <code>host="127.0.0.1"</code>.
+        CWE-605 / CWE-668 / OWASP A01:2021.
+        <br><strong>Исправление:</strong> изменить на <code>host="127.0.0.1"</code> или убрать прямой запуск и использовать gunicorn/uwsgi.
+      </td>
+      <td>Semgrep + Bandit</td>
+      <td><span class="badge b-med">Средний</span><br>Исправить</td>
+    </tr>
+    <tr class="p-low">
+      <td>2</td>
+      <td><code>task7/app/app.py</code></td>
+      <td>16</td>
+      <td>
+        Небезопасный секретный ключ по умолчанию<br>
+        <small>Не обнаружен инструментами (ручной анализ)</small>
+      </td>
+      <td>
+        <code>app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod")</code><br>
+        Если переменная <code>SECRET_KEY</code> не задана в среде, используется предсказуемый строковый литерал, что делает сессии уязвимыми к подделке.
+        CWE-521 / OWASP A02:2021 — Cryptographic Failures.
+        <br><strong>Исправление:</strong> требовать обязательной установки <code>SECRET_KEY</code> (без fallback) и генерировать случайный ключ длиной ≥ 32 байта.
+      </td>
+      <td>Не обнаружен<br>(ручной)</td>
+      <td><span class="badge b-med">Низкий</span><br>Исправить</td>
+    </tr>
+    <tr class="p-fp">
+      <td>3</td>
+      <td><code>task7/app/app.py</code></td>
+      <td>103</td>
+      <td>
+        Хранение учётных данных БД в сессии<br>
+        <small>Не обнаружен инструментами (ручной анализ)</small>
+      </td>
+      <td>
+        <code>session["db_creds"] = creds</code> — пароль базы данных хранится в подписанном cookie-сеансе. При утечке секретного ключа Flask атакующий сможет получить учётные данные.
+        Является архитектурным решением приложения, так как подключение к БД выполняется от лица пользователя.
+      </td>
+      <td>Не обнаружен<br>(ручной)</td>
+      <td><span class="badge b-warn">Ложное / Архитектурное</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ==================== ВЫВОД ==================== -->
+<h2>3. Вывод</h2>
+
+<div class="conclusion">
+
+<p><strong>Задание 3 (CLI-приложение):</strong> оба SAST-инструмента не выявили ни одного нарушения (0 срабатываний). Приложение использует только параметризованные запросы через <code>psycopg2.sql</code>, не имеет веб-интерфейса, не хранит состояния и не работает с сетевыми сокетами напрямую — вследствие этого поверхность атаки минимальна.</p>
+
+<p><strong>Задание 7 (Flask веб-приложение):</strong> оба инструмента зафиксировали по 1 нарушению — использование <code>host="0.0.0.0"</code> в <code>app.run()</code>. Оба инструмента указали на одну и ту же строку кода (242), подтвердив находку. Дополнительно ручной анализ выявил ещё одну потенциальную проблему — небезопасный fallback-ключ сессии Flask, — которую автоматические инструменты не смогли обнаружить.</p>
+
+<p><strong>Сравнительный вывод (Задание 3 → Задание 7):</strong></p>
+<ul>
+  <li>Количество <em>реальных</em> нарушений, зафиксированных инструментами, <strong>увеличилось с 0 до 1</strong> при переходе от CLI к веб-приложению.</li>
+  <li>Ложных срабатываний автоматических инструментов <strong>не выявлено</strong>: единственное найденное нарушение является реальным и подтверждено двумя независимыми инструментами.</li>
+  <li>Рост числа проблем обусловлен <em>расширением поверхности атаки</em>: добавление веб-интерфейса на Flask, работа с HTTP-сессиями, хранение учётных данных — это новые категории рисков, которых не было в CLI-приложении.</li>
+  <li>Автоматические инструменты эффективно нашли конфигурационную уязвимость сетевого уровня, однако <strong>пропустили</strong> проблему небезопасного секретного ключа по умолчанию — это указывает на ограниченность только автоматизированного анализа и необходимость ручного code review.</li>
+</ul>
+
+<p><strong>Общая рекомендация:</strong> при дальнейшем усложнении приложения (добавление аутентификации пользователей, ролей, файловых загрузок, API) следует ожидать дальнейшего роста числа предупреждений SAST. Рекомендуется интегрировать оба инструмента в CI/CD-пайплайн и проводить ручной анализ каждого нового модуля.</p>
+
+</div>
+
+<!-- ==================== ПРИЛОЖЕНИЕ ==================== -->
+<h2>Приложение — Исходные файлы отчётов</h2>
+<p>Сырые файлы отчётов SAST-инструментов расположены в директории <code>8/reports/</code>:</p>
+<ul>
+  <li><code>bandit_task3.json</code> / <code>bandit_task3.txt</code> — Bandit, Задание 3</li>
+  <li><code>bandit_task7.json</code> / <code>bandit_task7.txt</code> — Bandit, Задание 7</li>
+  <li><code>semgrep_task3.json</code> / <code>semgrep_task3.txt</code> — Semgrep, Задание 3</li>
+  <li><code>semgrep_task7.json</code> / <code>semgrep_task7.txt</code> — Semgrep, Задание 7</li>
+</ul>
+
+</body>
+</html>

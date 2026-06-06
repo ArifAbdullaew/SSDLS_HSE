@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Обновить запись{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h1>&#9998; Обновить запись</h1>
+
+  <!-- Step 1: choose table -->
+  <form method="POST" action="{{ url_for('update') }}" id="table-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="table">Таблица</label>
+        <select id="table" name="table" onchange="this.form.submit()">
+          {% for t in tables %}
+          <option value="{{ t }}" {% if t == selected_table %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </form>
+
+  <!-- Step 2: id + columns -->
+  <form method="POST" action="{{ url_for('update') }}">
+    <input type="hidden" name="table"  value="{{ selected_table }}">
+    <input type="hidden" name="action" value="submit">
+
+    <div class="form-row" style="margin-bottom:1.2rem;">
+      <div class="form-group" style="max-width:160px;">
+        <label for="row_id">ID записи <span style="color:#e05252;">*</span></label>
+        <input type="number" id="row_id" name="row_id" min="1"
+               value="{{ request.form.get('row_id', '') }}"
+               placeholder="например, 1" required>
+      </div>
+    </div>
+
+    <p class="section-title">Поля для обновления (оставьте пустым, чтобы не менять)</p>
+    <div class="col-grid">
+      {% for col in table_cols %}
+      <div class="form-group">
+        <label for="col_{{ col }}">{{ col }}</label>
+        <input type="text" id="col_{{ col }}" name="col_{{ col }}"
+               placeholder="{{ col }}"
+               value="{{ request.form.get('col_' ~ col, '') }}">
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error" style="margin-bottom:.8rem;">{{ error }}</div>
+    {% endif %}
+    {% if result %}
+    <div class="alert alert-success" style="margin-bottom:.8rem;">{{ result }}</div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+  </form>
+</div>
+{% endblock %}

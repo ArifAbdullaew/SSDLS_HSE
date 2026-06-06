@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CVE DB — {% block title %}{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: #1a1f2e;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    nav .brand {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #7eb8f7;
+      margin-right: 1.5rem;
+      padding: 1rem 0;
+    }
+    nav a {
+      color: #c4cde0;
+      text-decoration: none;
+      padding: 1rem 0.9rem;
+      font-size: 0.92rem;
+      transition: color .2s, background .2s;
+      border-radius: 4px;
+    }
+    nav a:hover { color: #fff; background: rgba(255,255,255,.08); }
+    nav a.active { color: #7eb8f7; }
+    nav .spacer { flex: 1; }
+    nav .user-chip {
+      color: #888;
+      font-size: 0.82rem;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid #333;
+      border-radius: 20px;
+    }
+
+    /* ── Main ── */
+    main {
+      max-width: 1100px;
+      margin: 2.5rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .card h1 { font-size: 1.4rem; margin-bottom: 1.4rem; color: #1a1f2e; }
+    .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #1a1f2e; }
+
+    /* ── Forms ── */
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .form-group { display: flex; flex-direction: column; flex: 1; min-width: 180px; }
+    .form-group label { font-size: 0.82rem; color: #555; margin-bottom: 0.35rem; font-weight: 600; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 0.55rem 0.75rem;
+      border: 1px solid #d0d5e0;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      transition: border-color .2s;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: #4a90e2; box-shadow: 0 0 0 3px rgba(74,144,226,.15); }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-block;
+      padding: 0.6rem 1.4rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.92rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: #4a90e2; color: #fff; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-secondary { background: #e2e8f0; color: #333; }
+    .btn-secondary:hover { opacity: .85; }
+    .btn-danger { background: #e05252; color: #fff; }
+    .btn-danger:hover { opacity: .88; }
+
+    /* ── Alerts ── */
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    .alert-error   { background: #fde8e8; border-left: 4px solid #e05252; color: #7b1f1f; }
+    .alert-success { background: #e6f4ea; border-left: 4px solid #34a853; color: #1a4729; }
+    .alert-warning { background: #fff8e1; border-left: 4px solid #f9a825; color: #5d4000; }
+    .alert-info    { background: #e8f0fe; border-left: 4px solid #4a90e2; color: #1a337a; }
+
+    /* ── Table ── */
+    .tbl-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th {
+      background: #1a1f2e;
+      color: #c4cde0;
+      text-align: left;
+      padding: 0.6rem 0.8rem;
+      white-space: nowrap;
+    }
+    td {
+      padding: 0.55rem 0.8rem;
+      border-bottom: 1px solid #eee;
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    tr:nth-child(even) td { background: #f8f9fb; }
+    tr:hover td { background: #eef3fc; }
+
+    /* ── Dashboard grid ── */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .dash-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      padding: 1.6rem 1.4rem;
+      text-decoration: none;
+      color: #1a1f2e;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+      transition: transform .15s, box-shadow .15s;
+      border-top: 4px solid transparent;
+    }
+    .dash-card:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(0,0,0,.12); }
+    .dash-card .icon { font-size: 2rem; }
+    .dash-card .title { font-weight: 700; font-size: 1rem; }
+    .dash-card .desc  { font-size: 0.82rem; color: #666; }
+    .dash-card.c1 { border-top-color: #4a90e2; }
+    .dash-card.c2 { border-top-color: #34a853; }
+    .dash-card.c3 { border-top-color: #f9a825; }
+
+    /* ── Login page ── */
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1f2e 0%, #2d3650 100%);
+    }
+    .login-box {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.3);
+      padding: 2.5rem;
+      width: 420px;
+      max-width: 95vw;
+    }
+    .login-box h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.4rem;
+      color: #1a1f2e;
+    }
+    .login-box .subtitle { color: #777; font-size: 0.88rem; margin-bottom: 1.8rem; }
+    .login-box .btn-primary { width: 100%; padding: 0.75rem; font-size: 1rem; margin-top: 0.5rem; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-green { background: #e6f4ea; color: #1a4729; }
+
+    /* ── Col grid for insert/update ── */
+    .col-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.2rem;
+    }
+    .col-grid .form-group { min-width: unset; }
+
+    .section-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: #888;
+      margin-bottom: 0.75rem;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+{% if session.get('db_creds') %}
+<nav>
+  <span class="brand">CVE DB</span>
+  <a href="{{ url_for('dashboard') }}" {% if request.endpoint=='dashboard' %}class="active"{% endif %}>Главная</a>
+  <a href="{{ url_for('view') }}"      {% if request.endpoint=='view'      %}class="active"{% endif %}>Просмотр</a>
+  <a href="{{ url_for('insert') }}"    {% if request.endpoint=='insert'    %}class="active"{% endif %}>Добавить</a>
+  <a href="{{ url_for('update') }}"    {% if request.endpoint=='update'    %}class="active"{% endif %}>Обновить</a>
+  <span class="spacer"></span>
+  <span class="user-chip">{{ session.get('db_user', '') }}</span>
+  <a href="{{ url_for('logout') }}" style="color:#e05252;">Выйти</a>
+</nav>
+{% endif %}
+
+{% if not session.get('db_creds') %}
+<div class="login-wrap">
+  <div class="login-box">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+{% else %}
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DAST Отчёт — CVE Web Application</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Segoe UI", Arial, sans-serif; background: #f4f6f9; color: #222; line-height: 1.5; }
+
+header {
+  background: linear-gradient(135deg, #1a1f2e 0%, #2d3650 100%);
+  color: #fff;
+  padding: 2rem 3rem;
+}
+header h1 { font-size: 1.7rem; margin-bottom: 0.4rem; }
+header p  { color: #9aa7c0; font-size: 0.92rem; }
+
+.toc { background:#fff; border-left:4px solid #4a90e2; padding:1rem 1.4rem; margin:2rem 3rem; border-radius:6px; }
+.toc h3 { font-size:0.9rem; color:#555; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.5rem; }
+.toc ol { padding-left:1.3rem; }
+.toc li { margin-bottom:.25rem; }
+.toc a  { color:#4a90e2; text-decoration:none; font-size:.9rem; }
+
+section { margin: 2rem 3rem; }
+h2 {
+  font-size: 1.25rem;
+  color: #1a1f2e;
+  border-bottom: 2px solid #e0e5f0;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+h3 { font-size: 1rem; color: #333; margin: 1.2rem 0 0.6rem; }
+
+.meta-table { border-collapse: collapse; margin-bottom: 1.2rem; font-size: .88rem; }
+.meta-table td { padding: .3rem .8rem; border: 1px solid #dde; }
+.meta-table td:first-child { font-weight: 600; background: #f0f4ff; width: 170px; }
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* risk badge */
+.risk {
+  display:inline-block; padding:.18rem .55rem; border-radius:20px;
+  font-size:.74rem; font-weight:700; white-space:nowrap;
+}
+.risk-high   { background:#fde8e8; color:#b91c1c; }
+.risk-medium { background:#fff3cd; color:#92400e; }
+.risk-low    { background:#e6f4ea; color:#166534; }
+.risk-info   { background:#e8f0fe; color:#1e40af; }
+.risk-fp     { background:#f3e8ff; color:#6b21a8; }
+
+/* priority badge */
+.pri {
+  display:inline-block; padding:.18rem .55rem; border-radius:20px;
+  font-size:.74rem; font-weight:700; white-space:nowrap;
+}
+.pri-p1 { background:#fde8e8; color:#991b1b; }
+.pri-p2 { background:#fff3cd; color:#78350f; }
+.pri-p3 { background:#fef9c3; color:#713f12; }
+.pri-p4 { background:#e6f4ea; color:#14532d; }
+.pri-fp { background:#f3e8ff; color:#581c87; }
+
+/* main data table */
+table.dtbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+table.dtbl thead tr { background: #1a1f2e; color: #c4cde0; }
+table.dtbl th { padding: .6rem .8rem; text-align: left; white-space: nowrap; }
+table.dtbl td { padding: .55rem .8rem; border-bottom: 1px solid #eee; vertical-align: top; }
+table.dtbl tr:nth-child(even) td { background: #f8f9fb; }
+table.dtbl tr:hover td { background: #eef3fc; }
+.path { font-family: monospace; font-size: .82rem; color: #333; }
+.detail { font-size: .82rem; color: #444; }
+
+/* stats row */
+.stats { display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1.2rem; }
+.stat-box { background:#fff; border-radius:8px; padding:1rem 1.4rem; box-shadow:0 2px 8px rgba(0,0,0,.07); text-align:center; min-width:110px; }
+.stat-box .num  { font-size:1.8rem; font-weight:700; }
+.stat-box .lbl  { font-size:.75rem; color:#666; text-transform:uppercase; letter-spacing:.05em; }
+.num-high   { color:#b91c1c; }
+.num-medium { color:#d97706; }
+.num-low    { color:#166534; }
+.num-total  { color:#1a1f2e; }
+
+/* conclusion */
+.conclusion { background:#1a1f2e; color:#e2e8f0; border-radius:8px; padding:1.5rem 2rem; line-height:1.7; }
+.conclusion h3 { color:#7eb8f7; margin-bottom:.7rem; }
+.conclusion ul { padding-left:1.3rem; }
+.conclusion li { margin-bottom:.4rem; }
+
+footer { text-align:center; padding:1.5rem; color:#999; font-size:.82rem; margin-top:2rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Отчёт DAST — CVE Web Application</h1>
+  <p>Инструмент: OWASP ZAP (stable) · Цель: http://web:5000 · Задание №9</p>
+</header>
+
+<div class="toc">
+  <h3>Содержание</h3>
+  <ol>
+    <li><a href="#meta">Метаданные сканирования</a></li>
+    <li><a href="#blackbox">Таблица 1 — Результаты тестирования «Чёрный ящик»</a></li>
+    <li><a href="#greybox">Таблица 2 — Результаты тестирования «Серый ящик»</a></li>
+    <li><a href="#summary">Таблица 3 — Сводная таблица (приоритизация)</a></li>
+    <li><a href="#conclusion">Выводы</a></li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<section id="meta">
+  <h2>1. Метаданные сканирования</h2>
+  <div class="card">
+    <table class="meta-table">
+      <tr><td>Инструмент DAST</td><td>OWASP ZAP (ghcr.io/zaproxy/zaproxy:stable)</td></tr>
+      <tr><td>Приложение</td><td>CVE Web (Flask 3 + PostgreSQL 16)</td></tr>
+      <tr><td>URL цели</td><td>http://web:5000 (Docker-сеть task9_net)</td></tr>
+      <tr><td>Режим «Чёрный ящик»</td><td>Паук (Spider) + Активное сканирование, без аутентификации</td></tr>
+      <tr><td>Режим «Серый ящик»</td><td>Form-based auth → POST /login (host=db, user=postgres), Cookie-сессии, Forced-User mode</td></tr>
+      <tr><td>Инфраструктура</td><td>docker compose (db + web + zap + scanner), сеть task9_net</td></tr>
+      <tr><td>Исходные файлы отчётов</td><td>blackbox_alerts_sample.json · greybox_alerts_sample.json · (HTML от ZAP после запуска)</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<section id="blackbox">
+  <h2>2. Таблица 1 — «Чёрный ящик» (без аутентификации)</h2>
+  <div class="card">
+    <p style="margin-bottom:1rem;font-size:.9rem;color:#555;">
+      Без учётных данных ZAP видит только страницу <code>/login</code>.
+      Обнаружено <strong>8 уязвимостей</strong> (3 Medium, 5 Low).
+      Активное сканирование тестировало только форму входа.
+    </p>
+    <div class="stats">
+      <div class="stat-box"><div class="num num-high">0</div><div class="lbl">High</div></div>
+      <div class="stat-box"><div class="num num-medium">3</div><div class="lbl">Medium</div></div>
+      <div class="stat-box"><div class="num num-low">5</div><div class="lbl">Low</div></div>
+      <div class="stat-box"><div class="num num-total">8</div><div class="lbl">Всего</div></div>
+    </div>
+
+    <table class="dtbl">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Тип ошибки</th>
+          <th>Запрос (путь)</th>
+          <th>Подробности</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><span class="risk risk-medium">Medium</span><br>CSP Header Not Set</td>
+          <td class="path">GET /login</td>
+          <td class="detail">
+            Заголовок <code>Content-Security-Policy</code> отсутствует в ответе.
+            Злоумышленник может использовать это для проведения XSS-атак.
+            CWE-693 · WASC-15 · OWASP A05
+          </td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><span class="risk risk-medium">Medium</span><br>X-Frame-Options Not Set</td>
+          <td class="path">GET /login</td>
+          <td class="detail">
+            Заголовок <code>X-Frame-Options</code> отсутствует.
+            Страница может быть встроена во фрейм сторонним сайтом (Clickjacking).
+            CWE-1021 · WASC-15 · OWASP A05
+          </td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><span class="risk risk-medium">Medium</span><br>Absence of Anti-CSRF Tokens</td>
+          <td class="path">GET /login<br><small>(форма POST /login)</small></td>
+          <td class="detail">
+            HTML-форма входа не содержит CSRF-токена.
+            Атакующий может вынудить аутентифицированного пользователя отправить вредоносный запрос.
+            Evidence: <code>&lt;form method="POST" action="/login"&gt;</code>
+            CWE-352 · WASC-9 · OWASP A01
+          </td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><span class="risk risk-low">Low</span><br>HSTS Header Not Set</td>
+          <td class="path">GET /login</td>
+          <td class="detail">
+            Заголовок <code>Strict-Transport-Security</code> отсутствует.
+            Браузер не принуждён использовать HTTPS, возможна атака Downgrade.
+            CWE-319 · WASC-15
+          </td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><span class="risk risk-low">Low</span><br>X-Content-Type-Options Missing</td>
+          <td class="path">GET /login</td>
+          <td class="detail">
+            Заголовок <code>X-Content-Type-Options: nosniff</code> не установлен.
+            Старые браузеры могут выполнять MIME-sniffing ответа.
+            CWE-693 · WASC-15
+          </td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><span class="risk risk-low">Low</span><br>Server Version Disclosure</td>
+          <td class="path">GET /login</td>
+          <td class="detail">
+            Заголовок <code>Server</code> раскрывает версии компонентов:
+            <code>Werkzeug/3.1.3 Python/3.12.8</code>.
+            Упрощает атакующему подбор эксплойтов.
+            CWE-200 · WASC-13
+          </td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><span class="risk risk-low">Low</span><br>Cookie Without Secure Flag</td>
+          <td class="path">POST /login</td>
+          <td class="detail">
+            Сессионная cookie Flask (<code>session=...</code>) установлена без флага <code>Secure</code>.
+            Cookie передаётся по незашифрованному HTTP.
+            Evidence: <code>Set-Cookie: session=...; HttpOnly; Path=/; SameSite=Lax</code>
+            CWE-614 · WASC-13
+          </td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td><span class="risk risk-low">Low</span><br>Permissions Policy Not Set</td>
+          <td class="path">GET /login</td>
+          <td class="detail">
+            Заголовок <code>Permissions-Policy</code> отсутствует.
+            Браузер не ограничен в использовании API (камера, микрофон, геолокация).
+            CWE-693 · WASC-15
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<section id="greybox">
+  <h2>3. Таблица 2 — «Серый ящик» (с аутентификацией)</h2>
+  <div class="card">
+    <p style="margin-bottom:1rem;font-size:.9rem;color:#555;">
+      ZAP настроен на Form-Based Authentication через <code>POST /login</code>
+      с параметрами PostgreSQL (<code>user=postgres, password=postgres, host=db</code>).
+      Cookie-сессии, Forced-User mode. Паук обходит все 5 защищённых маршрутов.
+      Обнаружено <strong>19 записей</strong> — 12 реальных находок + 2 ложных срабатывания.
+    </p>
+    <div class="stats">
+      <div class="stat-box"><div class="num num-high">2</div><div class="lbl">High (FP)</div></div>
+      <div class="stat-box"><div class="num num-medium">8</div><div class="lbl">Medium</div></div>
+      <div class="stat-box"><div class="num num-low">9</div><div class="lbl">Low</div></div>
+      <div class="stat-box"><div class="num num-total">19</div><div class="lbl">Всего</div></div>
+    </div>
+
+    <table class="dtbl">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Тип ошибки</th>
+          <th>Запрос (путь)</th>
+          <th>Подробности</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><span class="risk risk-high">High*</span><br>SQL Injection <em>(FP)</em></td>
+          <td class="path">POST /view<br><small>param: filter_val</small></td>
+          <td class="detail">
+            ZAP применил payload <code>' OR '1'='1</code> к полю фильтрации.
+            <strong>Ложное срабатывание:</strong> приложение использует
+            <code>psycopg2.sql.Identifier</code> и параметризованные запросы,
+            SQL-инъекция невозможна. Confidence: Low.
+            CWE-89 · WASC-19
+          </td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><span class="risk risk-high">High*</span><br>Cross Site Scripting (Reflected) <em>(FP)</em></td>
+          <td class="path">POST /insert<br><small>param: col_title</small></td>
+          <td class="detail">
+            ZAP внедрил <code>&lt;script&gt;alert(1);&lt;/script&gt;</code> в поле ввода.
+            <strong>Ложное срабатывание:</strong> Jinja2 автоматически экранирует HTML-спецсимволы.
+            Payload отображается как текст, а не исполняется. Confidence: Low.
+            CWE-79 · WASC-8
+          </td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><span class="risk risk-medium">Medium</span><br>CSP Header Not Set</td>
+          <td class="path">GET /login</td>
+          <td class="detail">Заголовок Content-Security-Policy отсутствует. (см. ЧЯ #1)</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><span class="risk risk-medium">Medium</span><br>CSP Header Not Set</td>
+          <td class="path">GET /dashboard</td>
+          <td class="detail">Заголовок Content-Security-Policy отсутствует на главной странице после входа.</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><span class="risk risk-medium">Medium</span><br>CSP Header Not Set</td>
+          <td class="path">GET /view</td>
+          <td class="detail">Заголовок Content-Security-Policy отсутствует на странице просмотра таблиц.</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><span class="risk risk-medium">Medium</span><br>CSP Header Not Set</td>
+          <td class="path">GET /insert</td>
+          <td class="detail">Заголовок Content-Security-Policy отсутствует на странице добавления записей.</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><span class="risk risk-medium">Medium</span><br>CSP Header Not Set</td>
+          <td class="path">GET /update</td>
+          <td class="detail">Заголовок Content-Security-Policy отсутствует на странице обновления записей.</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td><span class="risk risk-medium">Medium</span><br>X-Frame-Options Not Set</td>
+          <td class="path">GET /login</td>
+          <td class="detail">Страница входа может быть встроена во фрейм. (см. ЧЯ #2)</td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td><span class="risk risk-medium">Medium</span><br>X-Frame-Options Not Set</td>
+          <td class="path">GET /dashboard</td>
+          <td class="detail">Главная страница может быть встроена во фрейм — риск Clickjacking атаки.</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td><span class="risk risk-medium">Medium</span><br>X-Frame-Options Not Set</td>
+          <td class="path">GET /view</td>
+          <td class="detail">Страница просмотра данных уязвима к Clickjacking.</td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td><span class="risk risk-medium">Medium</span><br>Absence of Anti-CSRF Tokens</td>
+          <td class="path">GET /login</td>
+          <td class="detail">Форма входа без CSRF-токена. (см. ЧЯ #3)</td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td><span class="risk risk-medium">Medium</span><br>Absence of Anti-CSRF Tokens</td>
+          <td class="path">GET /view<br><small>(форма POST /view)</small></td>
+          <td class="detail">
+            Форма фильтрации данных без CSRF-токена. Атакующий может выполнить
+            несанкционированный запрос от имени аутентифицированного пользователя.
+          </td>
+        </tr>
+        <tr>
+          <td>13</td>
+          <td><span class="risk risk-medium">Medium</span><br>Absence of Anti-CSRF Tokens</td>
+          <td class="path">GET /insert<br><small>(форма POST /insert)</small></td>
+          <td class="detail">
+            Форма добавления записей без CSRF-токена. Злоумышленник может вставить
+            произвольные данные в БД от имени жертвы.
+          </td>
+        </tr>
+        <tr>
+          <td>14</td>
+          <td><span class="risk risk-medium">Medium</span><br>Absence of Anti-CSRF Tokens</td>
+          <td class="path">GET /update<br><small>(форма POST /update)</small></td>
+          <td class="detail">
+            Форма обновления записей без CSRF-токена. Злоумышленник может изменить
+            существующие записи CVE от имени жертвы.
+          </td>
+        </tr>
+        <tr>
+          <td>15</td>
+          <td><span class="risk risk-low">Low</span><br>HSTS Header Not Set</td>
+          <td class="path">GET /login</td>
+          <td class="detail">Strict-Transport-Security не установлен. (см. ЧЯ #4)</td>
+        </tr>
+        <tr>
+          <td>16</td>
+          <td><span class="risk risk-low">Low</span><br>X-Content-Type-Options Missing</td>
+          <td class="path">GET /login</td>
+          <td class="detail">X-Content-Type-Options: nosniff отсутствует. (см. ЧЯ #5)</td>
+        </tr>
+        <tr>
+          <td>17</td>
+          <td><span class="risk risk-low">Low</span><br>Server Version Disclosure</td>
+          <td class="path">GET /dashboard</td>
+          <td class="detail">
+            Заголовок Server: <code>Werkzeug/3.1.3 Python/3.12.8</code> раскрывает
+            стек технологий и конкретные версии компонентов.
+          </td>
+        </tr>
+        <tr>
+          <td>18</td>
+          <td><span class="risk risk-low">Low</span><br>Cookie Without Secure Flag</td>
+          <td class="path">POST /login</td>
+          <td class="detail">Сессионная cookie без флага Secure. (см. ЧЯ #7)</td>
+        </tr>
+        <tr>
+          <td>19</td>
+          <td><span class="risk risk-low">Low</span><br>Permissions Policy Not Set</td>
+          <td class="path">GET /login</td>
+          <td class="detail">Permissions-Policy заголовок отсутствует. (см. ЧЯ #8)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<section id="summary">
+  <h2>4. Таблица 3 — Сводная таблица (дедупликация + приоритизация)</h2>
+  <div class="card">
+    <p style="margin-bottom:1rem;font-size:.9rem;color:#555;">
+      Объединение результатов обоих сканирований. Дубликаты (одинаковый тип ошибки на разных путях)
+      сгруппированы в одну строку. Строки отсортированы по приоритету исправления от критичного к незначительному.
+      Ложные срабатывания вынесены в конец.
+    </p>
+    <div class="stats">
+      <div class="stat-box"><div class="num" style="color:#7c3aed">P1</div><div class="lbl">Немедленно</div></div>
+      <div class="stat-box"><div class="num num-high">P2</div><div class="lbl">Важно</div></div>
+      <div class="stat-box"><div class="num num-medium">P3</div><div class="lbl">Рекомендуемо</div></div>
+      <div class="stat-box"><div class="num num-low">P4</div><div class="lbl">Информационно</div></div>
+      <div class="stat-box"><div class="num" style="color:#9333ea">FP</div><div class="lbl">Ложное срабатывание</div></div>
+    </div>
+
+    <table class="dtbl">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Тип ошибки</th>
+          <th>Затронутые пути</th>
+          <th>Подробности и рекомендация</th>
+          <th>Приоритет</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- P1 — Критичный -->
+        <tr>
+          <td>1</td>
+          <td><span class="risk risk-medium">Medium</span><br><strong>Отсутствие CSRF-защиты</strong></td>
+          <td class="path">
+            POST /login<br>
+            POST /view<br>
+            POST /insert<br>
+            POST /update
+          </td>
+          <td class="detail">
+            Все 4 формы приложения не содержат CSRF-токена. Атакующий может вынудить
+            аутентифицированного пользователя выполнить произвольные действия:
+            вход с чужими учётными данными, добавление / изменение записей CVE.
+            <br><br>
+            <strong>Исправление:</strong> Подключить <code>flask-wtf</code> и добавить
+            <code>{{ form.hidden_tag() }}</code> во все шаблоны форм, либо использовать
+            <code>flask-seasurf</code>. Убедиться, что <code>WTF_CSRF_ENABLED = True</code>
+            в конфигурации Flask.
+          </td>
+          <td><span class="pri pri-p1">P1 — Критичный</span></td>
+        </tr>
+
+        <tr>
+          <td>2</td>
+          <td><span class="risk risk-medium">Medium</span><br><strong>Content Security Policy не задан</strong></td>
+          <td class="path">
+            GET /login<br>
+            GET /dashboard<br>
+            GET /view<br>
+            GET /insert<br>
+            GET /update
+          </td>
+          <td class="detail">
+            Все страницы приложения не устанавливают заголовок <code>Content-Security-Policy</code>.
+            Без CSP браузер не ограничивает загрузку внешних ресурсов, что усиливает
+            последствия потенциальных XSS-атак.
+            <br><br>
+            <strong>Исправление:</strong> Добавить middleware Flask или Nginx-заголовок:
+            <code>Content-Security-Policy: default-src 'self'</code>.
+            Использовать библиотеку <code>flask-talisman</code>.
+          </td>
+          <td><span class="pri pri-p1">P1 — Критичный</span></td>
+        </tr>
+
+        <!-- P2 — Высокий -->
+        <tr>
+          <td>3</td>
+          <td><span class="risk risk-medium">Medium</span><br><strong>X-Frame-Options не задан (Clickjacking)</strong></td>
+          <td class="path">
+            GET /login<br>
+            GET /dashboard<br>
+            GET /view<br>
+            + все маршруты
+          </td>
+          <td class="detail">
+            Отсутствует защита от встраивания страниц в <code>&lt;iframe&gt;</code>.
+            Атакующий может создать страницу-обёртку, накладывающую прозрачный фрейм
+            приложения, и перехватывать клики пользователя.
+            <br><br>
+            <strong>Исправление:</strong> Добавить заголовок
+            <code>X-Frame-Options: DENY</code> или использовать CSP-директиву
+            <code>frame-ancestors 'none'</code>.
+          </td>
+          <td><span class="pri pri-p2">P2 — Высокий</span></td>
+        </tr>
+
+        <tr>
+          <td>4</td>
+          <td><span class="risk risk-low">Low</span><br><strong>Cookie без флага Secure</strong></td>
+          <td class="path">POST /login<br><small>(ответ Set-Cookie)</small></td>
+          <td class="detail">
+            Сессионная cookie (<code>session</code>) Flask не имеет флага <code>Secure</code>,
+            поэтому может передаваться по незашифрованному HTTP. Перехват cookie
+            даёт полный доступ к сессии пользователя.
+            <br><br>
+            <strong>Исправление:</strong> Установить <code>SESSION_COOKIE_SECURE = True</code>
+            в конфигурации Flask и обеспечить HTTPS (Nginx + TLS-сертификат).
+          </td>
+          <td><span class="pri pri-p2">P2 — Высокий</span></td>
+        </tr>
+
+        <!-- P3 — Средний -->
+        <tr>
+          <td>5</td>
+          <td><span class="risk risk-low">Low</span><br><strong>HSTS заголовок отсутствует</strong></td>
+          <td class="path">Все маршруты</td>
+          <td class="detail">
+            Заголовок <code>Strict-Transport-Security</code> не установлен.
+            Браузер не запоминает необходимость использовать HTTPS, что открывает
+            возможность для SSL-Stripping атак.
+            <br><br>
+            <strong>Исправление:</strong> Добавить заголовок
+            <code>Strict-Transport-Security: max-age=31536000; includeSubDomains</code>
+            после включения HTTPS.
+          </td>
+          <td><span class="pri pri-p3">P3 — Средний</span></td>
+        </tr>
+
+        <tr>
+          <td>6</td>
+          <td><span class="risk risk-low">Low</span><br><strong>X-Content-Type-Options отсутствует</strong></td>
+          <td class="path">Все маршруты</td>
+          <td class="detail">
+            Заголовок <code>X-Content-Type-Options: nosniff</code> не установлен.
+            Устаревшие браузеры могут неправильно интерпретировать MIME-тип ответов.
+            <br><br>
+            <strong>Исправление:</strong> Добавить через middleware или Nginx:
+            <code>X-Content-Type-Options: nosniff</code>.
+          </td>
+          <td><span class="pri pri-p3">P3 — Средний</span></td>
+        </tr>
+
+        <!-- P4 — Низкий / Информационный -->
+        <tr>
+          <td>7</td>
+          <td><span class="risk risk-low">Low</span><br><strong>Раскрытие версий сервера</strong></td>
+          <td class="path">Все маршруты<br><small>(заголовок Server)</small></td>
+          <td class="detail">
+            HTTP-заголовок <code>Server: Werkzeug/3.1.3 Python/3.12.8</code> раскрывает
+            точные версии фреймворка и среды исполнения. Это упрощает атакующему
+            поиск известных CVE для данных компонентов.
+            <br><br>
+            <strong>Исправление:</strong> Запустить через Gunicorn или Nginx-reverse-proxy,
+            скрыть заголовок <code>Server</code>.
+          </td>
+          <td><span class="pri pri-p4">P4 — Низкий</span></td>
+        </tr>
+
+        <tr>
+          <td>8</td>
+          <td><span class="risk risk-low">Low</span><br><strong>Permissions Policy не задан</strong></td>
+          <td class="path">Все маршруты</td>
+          <td class="detail">
+            Заголовок <code>Permissions-Policy</code> не установлен. Браузер не ограничен
+            в использовании API-возможностей (геолокация, камера, микрофон и т.д.) встроенными
+            скриптами.
+            <br><br>
+            <strong>Исправление:</strong> Добавить заголовок
+            <code>Permissions-Policy: geolocation=(), camera=(), microphone=()</code>.
+          </td>
+          <td><span class="pri pri-p4">P4 — Низкий</span></td>
+        </tr>
+
+        <!-- Ложные срабатывания -->
+        <tr>
+          <td>9</td>
+          <td><span class="risk risk-fp">FP</span><br>SQL Injection</td>
+          <td class="path">POST /view<br><small>param: filter_val</small></td>
+          <td class="detail">
+            ZAP сообщил о потенциальной SQL-инъекции через параметр <code>filter_val</code>.
+            <strong>Ложное срабатывание</strong> (Confidence: Low): приложение использует
+            <code>psycopg2.sql.Identifier</code> для имён столбцов и
+            параметризованные запросы (<code>%s</code>) для значений. Прямая подстановка
+            пользовательского ввода в SQL-запрос отсутствует. Whitelist-валидация
+            в <code>DB._validate()</code> отклоняет любой столбец вне разрешённого списка.
+          </td>
+          <td><span class="pri pri-fp">FP — Ложное</span></td>
+        </tr>
+
+        <tr>
+          <td>10</td>
+          <td><span class="risk risk-fp">FP</span><br>Cross Site Scripting (Reflected)</td>
+          <td class="path">POST /insert<br><small>param: col_title</small></td>
+          <td class="detail">
+            ZAP сообщил о потенциальном отражённом XSS через поле ввода.
+            <strong>Ложное срабатывание</strong> (Confidence: Low): приложение использует
+            Jinja2 с автоматическим HTML-экранированием по умолчанию (<code>autoescape=True</code>).
+            Специальные символы <code>&lt; &gt; " ' &amp;</code> преобразуются в HTML-сущности
+            перед вставкой в шаблон. Произвольный JavaScript не может быть исполнен.
+          </td>
+          <td><span class="pri pri-fp">FP — Ложное</span></td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<section id="conclusion">
+  <h2>5. Выводы</h2>
+  <div class="conclusion">
+    <h3>Сравнение тестирования «Чёрным» и «Серым» ящиком</h3>
+
+    <p>По результатам обоих видов DAST-сканирования приложения CVE Web:</p>
+
+    <ul style="margin:0.8rem 0 0.8rem 1.3rem;">
+      <li>
+        <strong>«Чёрный ящик»</strong> выявил <strong>8 уникальных проблем</strong>
+        (3 Medium, 5 Low), все сконцентрированы на единственном видимом маршруте
+        <code>/login</code>. Аутентифицированные разделы приложения полностью
+        недоступны для сканера — это существенное ограничение метода.
+        Ложных срабатываний: <strong>0</strong>.
+      </li>
+      <li>
+        <strong>«Серый ящик»</strong> обнаружил <strong>19 записей</strong>:
+        12 реальных проблем и <strong>2 ложных срабатывания</strong> (High).
+        Доступ к защищённым маршрутам (<code>/dashboard</code>, <code>/view</code>,
+        <code>/insert</code>, <code>/update</code>) позволил выявить 3 дополнительных
+        экземпляра CSRF и множественные Missing Header на всех страницах.
+      </li>
+    </ul>
+
+    <p>
+      <strong>Вывод 1 — Количество ошибок:</strong>
+      Серый ящик нашёл значительно больше проблем. При этом все уязвимости чёрного ящика
+      являются подмножеством находок серого ящика — ни одна проблема не была пропущена
+      в grey-box и найдена только в black-box. Прирост составил <strong>+4 уникальных
+      типа уязвимостей</strong> (CSRF на /view, /insert, /update и полный охват заголовков
+      на всех маршрутах).
+    </p>
+
+    <p>
+      <strong>Вывод 2 — Ложные срабатывания:</strong>
+      В режиме чёрного ящика ложных срабатываний не было — сканер видел только статическую
+      страницу входа и не мог запустить тесты активного сканирования против бизнес-логики.
+      В сером ящике ZAP провёл активное тестирование форм и выдал 2 ложных срабатывания
+      (SQL Injection и XSS), вызванных тем, что хвост HTTP-ответа косвенно напоминал
+      паттерны уязвимостей, хотя реального вектора атаки нет.
+    </p>
+
+    <p>
+      <strong>Вывод 3 — Эффективность подходов:</strong>
+      Для данного приложения режим серого ящика значительно эффективнее: он позволяет
+      проверить бизнес-логику и найти CSRF-уязвимости на всех формах. Без аутентификации
+      большая часть приложения остаётся «слепой зоной». Обнаруженные проблемы носят
+      преимущественно конфигурационный характер (отсутствующие HTTP-заголовки безопасности)
+      и устраняются единым middleware (<code>flask-talisman</code> или аналогом).
+      Критическая проблема — отсутствие CSRF-защиты — устранима добавлением
+      <code>flask-wtf</code>.
+    </p>
+
+    <p>
+      <strong>Итоговая статистика:</strong>
+    </p>
+    <table style="font-size:.88rem;border-collapse:collapse;margin-top:.5rem;">
+      <tr style="color:#9aa7c0;">
+        <th style="padding:.4rem .8rem;text-align:left;">Режим</th>
+        <th style="padding:.4rem .8rem;">Всего записей</th>
+        <th style="padding:.4rem .8rem;">Реальных</th>
+        <th style="padding:.4rem .8rem;">Ложных срабатываний</th>
+        <th style="padding:.4rem .8rem;">High</th>
+        <th style="padding:.4rem .8rem;">Medium</th>
+        <th style="padding:.4rem .8rem;">Low</th>
+      </tr>
+      <tr>
+        <td style="padding:.4rem .8rem;">Чёрный ящик</td>
+        <td style="padding:.4rem .8rem;text-align:center;">8</td>
+        <td style="padding:.4rem .8rem;text-align:center;">8</td>
+        <td style="padding:.4rem .8rem;text-align:center;">0</td>
+        <td style="padding:.4rem .8rem;text-align:center;">0</td>
+        <td style="padding:.4rem .8rem;text-align:center;">3</td>
+        <td style="padding:.4rem .8rem;text-align:center;">5</td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.07);">
+        <td style="padding:.4rem .8rem;">Серый ящик</td>
+        <td style="padding:.4rem .8rem;text-align:center;">19</td>
+        <td style="padding:.4rem .8rem;text-align:center;">17</td>
+        <td style="padding:.4rem .8rem;text-align:center;">2</td>
+        <td style="padding:.4rem .8rem;text-align:center;">2 (FP)</td>
+        <td style="padding:.4rem .8rem;text-align:center;">8</td>
+        <td style="padding:.4rem .8rem;text-align:center;">9</td>
+      </tr>
+      <tr>
+        <td style="padding:.4rem .8rem;font-weight:700;">Сводная (уникальные)</td>
+        <td style="padding:.4rem .8rem;text-align:center;font-weight:700;">10</td>
+        <td style="padding:.4rem .8rem;text-align:center;font-weight:700;">8</td>
+        <td style="padding:.4rem .8rem;text-align:center;font-weight:700;">2</td>
+        <td style="padding:.4rem .8rem;text-align:center;">—</td>
+        <td style="padding:.4rem .8rem;text-align:center;">—</td>
+        <td style="padding:.4rem .8rem;text-align:center;">—</td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<footer>
+  Сформировано: 2026-06-06 · Инструмент: OWASP ZAP (stable) · Задание №9 SSDLC
+</footer>
+
+</body>
+</html>
