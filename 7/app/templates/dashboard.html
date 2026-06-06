@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h1>Добро пожаловать, {{ db_user }}
+    <span class="badge badge-green">подключено</span>
+  </h1>
+  <p style="color:#555;margin-bottom:1.5rem;font-size:.93rem;">
+    Выберите действие с базой данных CVE.
+  </p>
+
+  <div class="dash-grid">
+    <a href="{{ url_for('view') }}" class="dash-card c1">
+      <span class="icon">&#128269;</span>
+      <span class="title">Просмотр таблиц</span>
+      <span class="desc">Просматривайте данные с фильтрацией по любой колонке</span>
+    </a>
+    <a href="{{ url_for('insert') }}" class="dash-card c2">
+      <span class="icon">&#10133;</span>
+      <span class="title">Добавить запись</span>
+      <span class="desc">Вставьте новую строку в любую таблицу</span>
+    </a>
+    <a href="{{ url_for('update') }}" class="dash-card c3">
+      <span class="icon">&#9998;</span>
+      <span class="title">Обновить запись</span>
+      <span class="desc">Измените существующую запись по её ID</span>
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Таблицы в базе данных</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Таблица</th>
+        <th>Колонки</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set tables = [
+        ("cve",        "id, cve_id, title, created_at"),
+        ("cve_nvd",    "id, cve_id_ref, source_cve_id, summary, published_date, last_modified, source_url, raw_json, ingested_at"),
+        ("cve_rhel",   "id, cve_id_ref, advisory_name, summary, severity, published_date, source_url, raw_json, ingested_at"),
+        ("cve_mitre",  "id, cve_id_ref, description, assigner, published_date, source_url, raw_json, ingested_at"),
+        ("cve_github", "id, cve_id_ref, gh_advisory_id, summary, ecosystem, published_date, source_url, raw_json, ingested_at"),
+        ("cvss_score", "id, source_name, source_entry_id, version, vector, score, created_at"),
+        ("reference",  "id, cve_id_ref, source_name, source_entry_id, url, note"),
+      ] %}
+      {% for name, cols in tables %}
+      <tr>
+        <td><strong>{{ name }}</strong></td>
+        <td style="color:#555;font-size:.83rem;">{{ cols }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

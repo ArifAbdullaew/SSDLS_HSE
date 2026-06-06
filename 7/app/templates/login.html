@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<h1>CVE Database</h1>
+<p class="subtitle">Введите параметры подключения к PostgreSQL</p>
+
+<form method="POST" action="{{ url_for('login') }}" autocomplete="off">
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="host">Хост</label>
+      <input type="text" id="host" name="host" value="db" placeholder="localhost" required>
+    </div>
+    <div class="form-group" style="max-width:110px;">
+      <label for="port">Порт</label>
+      <input type="number" id="port" name="port" value="5432" min="1" max="65535" required>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="dbname">База данных</label>
+      <input type="text" id="dbname" name="dbname" value="cve_db" required>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="user">Пользователь</label>
+      <input type="text" id="user" name="user" placeholder="postgres" required autofocus>
+    </div>
+    <div class="form-group">
+      <label for="password">Пароль</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Войти</button>
+</form>
+{% endblock %}

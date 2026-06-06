@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Добавить запись{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h1>&#10133; Добавить запись</h1>
+
+  <!-- Step 1: choose table -->
+  <form method="POST" action="{{ url_for('insert') }}" id="table-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="table">Таблица</label>
+        <select id="table" name="table" onchange="this.form.submit()">
+          {% for t in tables %}
+          <option value="{{ t }}" {% if t == selected_table %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </form>
+
+  <!-- Step 2: fill columns -->
+  <form method="POST" action="{{ url_for('insert') }}">
+    <input type="hidden" name="table" value="{{ selected_table }}">
+    <input type="hidden" name="action" value="submit">
+
+    <p class="section-title">Поля таблицы {{ selected_table }}</p>
+    <div class="col-grid">
+      {% for col in table_cols %}
+      <div class="form-group">
+        <label for="col_{{ col }}">{{ col }}</label>
+        <input type="text" id="col_{{ col }}" name="col_{{ col }}"
+               placeholder="{{ col }}"
+               value="{{ request.form.get('col_' ~ col, '') }}">
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error" style="margin-bottom:.8rem;">{{ error }}</div>
+    {% endif %}
+    {% if result %}
+    <div class="alert alert-success" style="margin-bottom:.8rem;">{{ result }}</div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary">Добавить запись</button>
+  </form>
+</div>
+{% endblock %}
